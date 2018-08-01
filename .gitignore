@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+.classpath
+.settings/
+.loadpath
+.idea/*
+.git/*
+bin/*
+release/*
+README
