@@ -21,7 +21,7 @@ const (
 		"  |____/  \\__,_| \\___/ |_____/  \\___/  \\_/\\_/  |_| |_|/_/    \\_\\|_| \\___||_|    \\__|\n "
 
 	TextCredit = "  " + AppName + " " + Version + " Powered by [%s] in BdoTH family is [%s]\n\n"
-	TextEnjoy = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!"
+	TextEnjoy  = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!"
 
 	TextTitle           = AppName + ": BDO [ %s ] Check again %d seconds..."
 	TextTitle2          = AppName + ": BDO [ %s ]"
