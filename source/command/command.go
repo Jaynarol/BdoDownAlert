@@ -1,7 +1,7 @@
 package command
 
 import (
-	"../val"
+	"github.com/jaynarol/BdoDownAlert/source/val"
 	"log"
 	"os/exec"
 	"regexp"

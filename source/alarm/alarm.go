@@ -1,11 +1,12 @@
 package alarm
 
 import (
-	"../val"
 	"fmt"
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"github.com/jaynarol/BdoDownAlert/source/shutdown"
+	"github.com/jaynarol/BdoDownAlert/source/val"
 	"jaynarol.com/utility/console"
 	"jaynarol.com/utility/messagebox"
 	"log"
@@ -33,6 +34,7 @@ var (
 
 func ShouldAlert(lastStatus val.LastStatus, client val.Client) val.LastStatus {
 	situation := situations[lastStatus.Alive][client.Found]
+	alert("disconnect_alert")
 
 	switch situation {
 	case val.SituationStarting:
@@ -65,12 +67,13 @@ func alert(section string) {
 	inputToken := len(val.Setting.Section("system").Key("line_token").MustString("")) > 30
 	enableSound := val.Setting.Section(section).Key("sound").MustBool(false)
 	intervalAlert := val.Setting.Section("interval").Key("alert").RangeInt(10, 3, 86400)
+	shutdownSetting := shutdown.Setting(section)
 	showMessageBox = true
 	unsendLineMessage = true
 
 	go func() {
 		const MB_TOPMOST = 0x00040000
-		messagebox.Show(val.AppName, val.TextSituation[section]["popup"], messagebox.MB_ICONEXCLAMATION|MB_TOPMOST|messagebox.MB_OK)
+		messagebox.Show(val.AppName, val.TextSituation[section]["popup"]+shutdownSetting.Message, messagebox.MB_ICONEXCLAMATION|MB_TOPMOST|messagebox.MB_OK)
 		showMessageBox = false
 	}()
 
@@ -80,6 +83,9 @@ func alert(section string) {
 		}
 		if enableLine && inputToken && unsendLineMessage && second%10 == 0 {
 			go lineNotify(message)
+		}
+		if shutdownSetting.Active && (second+1)%shutdownSetting.Delay == 0 {
+			shutdown.Do(shutdownSetting.Method)
 		}
 		time.Sleep(time.Second)
 	}

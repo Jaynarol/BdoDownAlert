@@ -29,6 +29,7 @@ const (
 	TextRunning         = "Running"
 	TextDead            = "Dead"
 	TextFailReadSetting = "Fail to read file: %v"
+	TextShutdown        = "============================\n\nคอมพิวเตอร์จะ %s ในอีก %d วินาที\n\nหากต้องการยกเลิกให้กดปุ่ม OK หรือ ปล่อยไว้เผื่อให้คอมปิดอัตโนมัติ\n\n"
 
 	SituationStillRuning = "StillRuning"
 	SituationDying       = "Dying"
@@ -64,4 +65,11 @@ type LastStatus struct {
 type Client struct {
 	Found bool
 	Port  string
+}
+
+type ShutdownSetting struct {
+	Active  bool
+	Method  string
+	Delay   int
+	Message string
 }

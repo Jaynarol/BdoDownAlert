@@ -1,12 +1,12 @@
-package main
+package source
 
 import (
-	"./alarm"
-	"./command"
-	"./val"
 	"bufio"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/jaynarol/BdoDownAlert/source/alarm"
+	"github.com/jaynarol/BdoDownAlert/source/command"
+	"github.com/jaynarol/BdoDownAlert/source/val"
 	"gopkg.in/ini.v1"
 	"jaynarol.com/utility/console"
 	"log"
@@ -19,7 +19,7 @@ var (
 	lastStatus = val.LastStatus{}
 )
 
-func main() {
+func Main() {
 	welcome()
 	if loadSettings() && checkSound() {
 		loopPing()
