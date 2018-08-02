@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	showMessageBox = false
-	situations     = map[bool]map[bool]string{
+	showMessageBox    = false
+	unsendLineMessage = true
+	situations        = map[bool]map[bool]string{
 		true: {
 			true:  val.SituationStillRuning,
 			false: val.SituationDying,
@@ -56,17 +57,16 @@ func checkReconnect(lastStatus val.LastStatus, client val.Client) val.LastStatus
 
 func alert(section string) {
 
-	log.Println(val.TextSituation[section]["message"])
-	console.SetTitle(fmt.Sprintf(val.TextTitle2, val.TextSituation[section]["message"]))
-	showMessageBox = true
+	message := val.TextSituation[section]["message"]
+	console.SetTitle(fmt.Sprintf(val.TextTitle2, message))
+	log.Println(message)
 
-	go func() {
-		enableLine := val.Setting.Section(section).Key("line_message").MustBool(false)
-		inputToken := len(val.Setting.Section("system").Key("line_token").MustString("")) > 30
-		if enableLine && inputToken {
-			lineNotify(val.TextSituation[section]["message"])
-		}
-	}()
+	enableLine := val.Setting.Section(section).Key("line_message").MustBool(false)
+	inputToken := len(val.Setting.Section("system").Key("line_token").MustString("")) > 30
+	enableSound := val.Setting.Section(section).Key("sound").MustBool(false)
+	intervalAlert := val.Setting.Section("interval").Key("alert").RangeInt(10, 3, 86400)
+	showMessageBox = true
+	unsendLineMessage = true
 
 	go func() {
 		const MB_TOPMOST = 0x00040000
@@ -75,10 +75,11 @@ func alert(section string) {
 	}()
 
 	for second := 0; showMessageBox == true; second++ {
-		enableSound := val.Setting.Section(section).Key("sound").MustBool(false)
-		intervalAlert := val.Setting.Section("interval").Key("alert").RangeInt(10, 3, 86400)
 		if enableSound && second%intervalAlert == 0 {
 			playSound()
+		}
+		if enableLine && inputToken && unsendLineMessage && second%10 == 0 {
+			go lineNotify(message)
 		}
 		time.Sleep(time.Second)
 	}
@@ -110,5 +111,8 @@ func lineNotify(text string) {
 	defer resp.Body.Close()
 	if err != nil || resp.StatusCode != 200 {
 		log.Println("Line Message Error: ", resp.Status, err)
+		return
 	}
+	log.Println("send Line Message successful")
+	unsendLineMessage = false
 }
