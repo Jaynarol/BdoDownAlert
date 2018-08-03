@@ -34,7 +34,6 @@ var (
 
 func ShouldAlert(lastStatus val.LastStatus, client val.Client) val.LastStatus {
 	situation := situations[lastStatus.Alive][client.Found]
-	alert("disconnect_alert")
 
 	switch situation {
 	case val.SituationStarting:
@@ -60,7 +59,8 @@ func checkReconnect(lastStatus val.LastStatus, client val.Client) val.LastStatus
 func alert(section string) {
 
 	message := val.TextSituation[section]["message"]
-	console.SetTitle(fmt.Sprintf(val.TextTitle2, message))
+	console.SetTitle(fmt.Sprintf(val.TextTitle, message))
+	fmt.Printf("\r")
 	log.Println(message)
 
 	enableLine := val.Setting.Section(section).Key("line_message").MustBool(false)
@@ -82,10 +82,13 @@ func alert(section string) {
 			playSound()
 		}
 		if enableLine && inputToken && unsendLineMessage && second%10 == 0 {
-			go lineNotify(message)
+			lineNotify(shutdownSetting.Active, message)
 		}
-		if shutdownSetting.Active && (second+1)%shutdownSetting.Delay == 0 {
-			shutdown.Do(shutdownSetting.Method)
+		if shutdownSetting.Active {
+			fmt.Printf(val.TextShutingDown, shutdownSetting.Method, shutdownSetting.Delay-second-1)
+			if (second+1)%shutdownSetting.Delay == 0 {
+				shutdown.Do(shutdownSetting.Method)
+			}
 		}
 		time.Sleep(time.Second)
 	}
@@ -101,7 +104,11 @@ func playSound() {
 	})))
 }
 
-func lineNotify(text string) {
+func lineNotify(countdownShutdown bool, text string) {
+	if countdownShutdown {
+		fmt.Printf("\r")
+	}
+
 	client := &http.Client{}
 	params := url.Values{}
 	params.Set("message", text)

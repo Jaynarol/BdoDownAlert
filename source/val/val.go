@@ -6,7 +6,7 @@ import (
 
 const (
 	AppName     = "BdoDownAlert"
-	Version     = "v1.0.0"
+	Version     = "v1.1.0"
 	FileSetting = "setting.ini"
 	FileSound   = "assets/alarm.mp3"
 	Developer   = "Jaynarol"
@@ -21,11 +21,12 @@ const (
 		"  |____/  \\__,_| \\___/ |_____/  \\___/  \\_/\\_/  |_| |_|/_/    \\_\\|_| \\___||_|    \\__|\n "
 
 	TextCredit = "  " + AppName + " " + Version + " Powered by [%s] in BdoTH family is [%s]\n\n"
-	TextEnjoy  = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!"
+	TextEnjoy  = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!\n"
 
-	TextTitle           = AppName + ": BDO [ %s ] Check again %d seconds..."
-	TextTitle2          = AppName + ": BDO [ %s ]"
+	TextTitle           = AppName + ": BDO [ %s ]"
+	TextChecking        = "\rCheck again %d seconds..."
 	TextExit            = "Press 'Enter' to continue..."
+	TextShutingDown     = "\rComputer will [%s] in [%d] seconds "
 	TextRunning         = "Running"
 	TextDead            = "Dead"
 	TextFailReadSetting = "Fail to read file: %v"
@@ -44,6 +45,14 @@ var (
 	Status   = map[bool]string{
 		true:  TextRunning,
 		false: TextDead,
+	}
+	ShutdownDoing = map[string]string{
+		"shutdown":  "shutting down",
+		"hibernate": "hibernating",
+	}
+	ShutdownCmd = map[string][]string{
+		"shutdown":  {"cmd", "/C", "shutdown", "-s -f -t 0"},
+		"hibernate": {"cmd", "/C", "shutdown", "-h -f -t 0"},
 	}
 	TextSituation = map[string]map[string]string{
 		"reconnect_alert": {

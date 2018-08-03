@@ -8,6 +8,7 @@ import (
 	"github.com/jaynarol/BdoDownAlert/source/command"
 	"github.com/jaynarol/BdoDownAlert/source/val"
 	"gopkg.in/ini.v1"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"jaynarol.com/utility/console"
 	"log"
 	"os"
@@ -21,6 +22,7 @@ var (
 
 func Main() {
 	welcome()
+	logBind()
 	if loadSettings() && checkSound() {
 		loopPing()
 	}
@@ -32,10 +34,18 @@ func welcome() {
 
 	color.Yellow(val.TextWelcome)
 	color.Cyan(val.TextEnjoy)
-	fmt.Println()
 	fmt.Fprintf(color.Output, val.TextCredit, yellow(val.Developer), yellow(val.BdoTHFamily))
 	color.Yellow(strings.Repeat("=", 85))
 	fmt.Println()
+}
+
+func logBind() {
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   "working.log",
+		MaxSize:    10,
+		MaxBackups: 3,
+		MaxAge:     30,
+	})
 }
 
 func loopPing() {
@@ -71,7 +81,8 @@ func checkSound() bool {
 func updateConsole() {
 	intervalPing := val.Setting.Section("interval").Key("ping").RangeInt(10, 3, 86400)
 	for second := intervalPing; second > 0; second-- {
-		title := fmt.Sprintf(val.TextTitle, val.Status[lastStatus.Alive], second)
+		title := fmt.Sprintf(val.TextTitle, val.Status[lastStatus.Alive])
+		fmt.Printf(val.TextChecking, second)
 		console.SetTitle(title)
 		time.Sleep(time.Second)
 	}

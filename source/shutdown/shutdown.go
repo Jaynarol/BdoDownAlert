@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/jaynarol/BdoDownAlert/source/val"
 	"log"
+	"os/exec"
 	"regexp"
 	"time"
 )
 
 func Setting(section string) val.ShutdownSetting {
 	enableShutdown := val.Setting.Section(section).Key("shutdown").MustString("0")
-	shutdownMethod := val.Setting.Section(section).Key("shutdown_method").In("shutdown", []string{"shutdown", "hibernate", "sleep"})
+	shutdownMethod := val.Setting.Section(section).Key("shutdown_method").In("shutdown", []string{"shutdown", "hibernate"})
 	shutdownDelay := val.Setting.Section(section).Key("shutdown_delay").RangeInt(5, 5, 86400)
 	activeShutdowm := Should(time.Now(), enableShutdown)
 	messageShutdowm := fmt.Sprintf(val.TextShutdown, shutdownMethod, shutdownDelay)
@@ -44,5 +45,7 @@ func Should(timeNow time.Time, setting string) bool {
 }
 
 func Do(method string) {
-	log.Printf("Computer %s...", method)
+	cmd := val.ShutdownCmd[method]
+	log.Printf("Computer %s...", val.ShutdownDoing[method])
+	exec.Command(cmd[0], cmd[1], cmd[2], cmd[3])
 }
