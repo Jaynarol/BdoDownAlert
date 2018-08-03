@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/jaynarol/BdoDownAlert/source/val"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -44,8 +46,13 @@ func Should(timeNow time.Time, setting string) bool {
 	return setting == "1"
 }
 
-func Do(method string) {
+func Run(method string) {
 	cmd := val.ShutdownCmd[method]
-	log.Printf("Computer %s...", val.ShutdownDoing[method])
-	exec.Command(cmd[0], cmd[1], cmd[2], cmd[3])
+	fmt.Printf("\r")
+	log.Printf("Computer %s...\r\n", val.ShutdownDoing[method])
+	err := exec.Command(cmd[0], cmd[1:]...).Start()
+	if err != nil {
+		log.Printf("%s ERROR: %s\r\n", strings.ToUpper(method), err)
+	}
+	os.Exit(0)
 }

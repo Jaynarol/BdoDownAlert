@@ -9,10 +9,10 @@ import (
 )
 
 func IsAlive() (val.Client, error) {
-	output, err := exec.Command(val.PingCmd[0], val.PingCmd[1], val.PingCmd[2], val.PingCmd[3]).CombinedOutput()
+	output, err := exec.Command(val.PingCmd[0], val.PingCmd[1:]...).CombinedOutput()
 	netstat := string(output)
 	if err != nil {
-		log.Println("ERROR: ", netstat)
+		log.Printf("NETSTAT ERROR: %s\r\n", netstat)
 		return val.Client{}, err
 	}
 	client := findLocalPort(netstat)

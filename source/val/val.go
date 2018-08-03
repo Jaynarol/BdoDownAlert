@@ -21,15 +21,16 @@ const (
 		"  |____/  \\__,_| \\___/ |_____/  \\___/  \\_/\\_/  |_| |_|/_/    \\_\\|_| \\___||_|    \\__|\n "
 
 	TextCredit = "  " + AppName + " " + Version + " Powered by [%s] in BdoTH family is [%s]\n\n"
-	TextEnjoy  = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!\n"
+	TextEnjoy  = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!\n\n"
 
 	TextTitle           = AppName + ": BDO [ %s ]"
 	TextChecking        = "\rCheck again %d seconds..."
 	TextExit            = "Press 'Enter' to continue..."
 	TextShutingDown     = "\rComputer will [%s] in [%d] seconds "
+	TextStarting        = "Start!"
 	TextRunning         = "Running"
 	TextDead            = "Dead"
-	TextFailReadSetting = "Fail to read file: %v"
+	TextFailReadSetting = "Fail to read file: %v\r\n"
 	TextShutdown        = "============================\n\nคอมพิวเตอร์จะ %s ในอีก %d วินาที\n\nหากต้องการยกเลิกให้กดปุ่ม OK หรือ ปล่อยไว้เผื่อให้คอมปิดอัตโนมัติ\n\n"
 
 	SituationStillRuning = "StillRuning"
@@ -40,7 +41,7 @@ const (
 
 var (
 	PingCmd  = [4]string{"cmd", "/C", "netstat", "-ano"}
-	BdoPorts = [2]string{":8888 ", ":8889 "}
+	BdoPorts = []string{":8889 "}
 	Setting  = ini.Empty()
 	Status   = map[bool]string{
 		true:  TextRunning,
@@ -51,8 +52,8 @@ var (
 		"hibernate": "hibernating",
 	}
 	ShutdownCmd = map[string][]string{
-		"shutdown":  {"cmd", "/C", "shutdown", "-s -f -t 0"},
-		"hibernate": {"cmd", "/C", "shutdown", "-h -f -t 0"},
+		"shutdown":  {"cmd", "/C", "shutdown", "-s", "-f", "-t", "0"},
+		"hibernate": {"cmd", "/C", "shutdown", "-h"},
 	}
 	TextSituation = map[string]map[string]string{
 		"reconnect_alert": {

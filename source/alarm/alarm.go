@@ -5,6 +5,7 @@ import (
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"github.com/fatih/color"
 	"github.com/jaynarol/BdoDownAlert/source/shutdown"
 	"github.com/jaynarol/BdoDownAlert/source/val"
 	"jaynarol.com/utility/console"
@@ -16,6 +17,8 @@ import (
 	"strings"
 	"time"
 )
+
+const MB_TOPMOST = 0x00040000
 
 var (
 	showMessageBox    = false
@@ -61,7 +64,7 @@ func alert(section string) {
 	message := val.TextSituation[section]["message"]
 	console.SetTitle(fmt.Sprintf(val.TextTitle, message))
 	fmt.Printf("\r")
-	log.Println(message)
+	log.Printf("%s\r\n", message)
 
 	enableLine := val.Setting.Section(section).Key("line_message").MustBool(false)
 	inputToken := len(val.Setting.Section("system").Key("line_token").MustString("")) > 30
@@ -72,26 +75,28 @@ func alert(section string) {
 	unsendLineMessage = true
 
 	go func() {
-		const MB_TOPMOST = 0x00040000
-		messagebox.Show(val.AppName, val.TextSituation[section]["popup"]+shutdownSetting.Message, messagebox.MB_ICONEXCLAMATION|MB_TOPMOST|messagebox.MB_OK)
-		showMessageBox = false
+		for second := 0; showMessageBox == true; second++ {
+			if enableSound && second%intervalAlert == 0 {
+				playSound()
+			}
+			if enableLine && inputToken && unsendLineMessage && second%10 == 0 {
+				lineNotify(shutdownSetting.Active, message)
+			}
+			if shutdownSetting.Active {
+				color.Set(color.BgRed, color.Bold)
+				fmt.Printf(val.TextShutingDown, shutdownSetting.Method, shutdownSetting.Delay-second-1)
+				color.Unset()
+				if (second+1)%shutdownSetting.Delay == 0 {
+					shutdown.Run(shutdownSetting.Method)
+				}
+			}
+			time.Sleep(time.Second)
+		}
+		fmt.Printf("\r                                                                          ")
 	}()
 
-	for second := 0; showMessageBox == true; second++ {
-		if enableSound && second%intervalAlert == 0 {
-			playSound()
-		}
-		if enableLine && inputToken && unsendLineMessage && second%10 == 0 {
-			lineNotify(shutdownSetting.Active, message)
-		}
-		if shutdownSetting.Active {
-			fmt.Printf(val.TextShutingDown, shutdownSetting.Method, shutdownSetting.Delay-second-1)
-			if (second+1)%shutdownSetting.Delay == 0 {
-				shutdown.Do(shutdownSetting.Method)
-			}
-		}
-		time.Sleep(time.Second)
-	}
+	messagebox.Show(val.AppName, val.TextSituation[section]["popup"]+shutdownSetting.Message, messagebox.MB_ICONEXCLAMATION|MB_TOPMOST|messagebox.MB_OK)
+	showMessageBox = false
 }
 
 func playSound() {
@@ -114,7 +119,7 @@ func lineNotify(countdownShutdown bool, text string) {
 	params.Set("message", text)
 	req, err := http.NewRequest("POST", "https://notify-api.line.me/api/notify", strings.NewReader(params.Encode()))
 	if err != nil {
-		log.Println("Line Message Error: ", err)
+		log.Printf("LINE MESSAGE ERROR: %s\r\n", err)
 		return
 	}
 
@@ -123,9 +128,9 @@ func lineNotify(countdownShutdown bool, text string) {
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 	if err != nil || resp.StatusCode != 200 {
-		log.Println("Line Message Error: ", resp.Status, err)
+		log.Printf("LINE MESSAGE ERROR: %s - %s\r\n", resp.Status, err)
 		return
 	}
-	log.Println("send Line Message successful")
+	log.Print("send Line Message successful\r\n")
 	unsendLineMessage = false
 }

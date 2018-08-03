@@ -9,6 +9,7 @@ import (
 	"github.com/jaynarol/BdoDownAlert/source/val"
 	"gopkg.in/ini.v1"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"io"
 	"jaynarol.com/utility/console"
 	"log"
 	"os"
@@ -21,8 +22,8 @@ var (
 )
 
 func Main() {
-	welcome()
 	logBind()
+	welcome()
 	if loadSettings() && checkSound() {
 		loopPing()
 	}
@@ -32,20 +33,23 @@ func Main() {
 func welcome() {
 	yellow := color.New(color.FgYellow).SprintFunc()
 
-	color.Yellow(val.TextWelcome)
+	color.Set(color.FgYellow, color.Bold)
+	fmt.Println(val.TextWelcome)
+	color.Unset()
 	color.Cyan(val.TextEnjoy)
 	fmt.Fprintf(color.Output, val.TextCredit, yellow(val.Developer), yellow(val.BdoTHFamily))
 	color.Yellow(strings.Repeat("=", 85))
-	fmt.Println()
+	log.Printf("%s\r\n", val.TextStarting)
 }
 
 func logBind() {
-	log.SetOutput(&lumberjack.Logger{
+	mw := io.MultiWriter(os.Stdout, &lumberjack.Logger{
 		Filename:   "working.log",
 		MaxSize:    10,
 		MaxBackups: 3,
 		MaxAge:     30,
 	})
+	log.SetOutput(mw)
 }
 
 func loopPing() {
@@ -82,7 +86,9 @@ func updateConsole() {
 	intervalPing := val.Setting.Section("interval").Key("ping").RangeInt(10, 3, 86400)
 	for second := intervalPing; second > 0; second-- {
 		title := fmt.Sprintf(val.TextTitle, val.Status[lastStatus.Alive])
+		color.Set(color.FgYellow)
 		fmt.Printf(val.TextChecking, second)
+		color.Unset()
 		console.SetTitle(title)
 		time.Sleep(time.Second)
 	}
