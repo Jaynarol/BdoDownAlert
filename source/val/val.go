@@ -23,15 +23,16 @@ const (
 	TextCredit = "  " + AppName + " " + Version + " Powered by [%s] in BdoTH family is [%s]\n\n"
 	TextEnjoy  = "  It's time to relax and assign this work to me... Don't worry I will notify if something wrong!\n\n"
 
-	TextTitle           = AppName + ": BDO [ %s ]"
-	TextChecking        = "\rCheck again %d seconds..."
-	TextExit            = "Press 'Enter' to continue..."
-	TextShutingDown     = "\rComputer will [%s] in [%d] seconds "
-	TextStarting        = "Start!"
-	TextRunning         = "Running"
-	TextDead            = "Dead"
-	TextFailReadSetting = "Fail to read file: %v\r\n"
-	TextShutdown        = "============================\n\nคอมพิวเตอร์จะ %s ในอีก %d วินาที\n\nหากต้องการยกเลิกให้กดปุ่ม OK หรือ ปล่อยไว้เผื่อให้คอมปิดอัตโนมัติ\n\n"
+	TextTitle            = AppName + ": BDO [ %s ]"
+	TextStarting         = "Start!"
+	TextChecking         = "\rCheck again %d seconds..."
+	TextExit             = "Press 'Enter' to continue..."
+	TextShutdownCounting = "\rComputer will [%s] in [%d] seconds "
+	TextShutingDown      = "Computer %s...\r\n"
+	TextRunning          = "Running"
+	TextDead             = "Dead"
+	TextFailReadSetting  = "Fail to read file: %v\r\n"
+	TextShutdown         = "============================\n\nคอมพิวเตอร์จะ %s ในอีก %d วินาที\n\nหากต้องการยกเลิกให้กดปุ่ม OK หรือ ปล่อยไว้เผื่อให้คอมปิดอัตโนมัติ\n\n"
 
 	SituationStillRuning = "StillRuning"
 	SituationDying       = "Dying"
@@ -57,12 +58,14 @@ var (
 	}
 	TextSituation = map[string]map[string]string{
 		"reconnect_alert": {
-			"message": "BDO Reconnect!",
-			"popup":   "                Black Desert Online                \n\n                [ - Reconnect - ]                \n\n",
+			"shortMessage": "Reconnect!",
+			"message":      "BDO Reconnect!",
+			"popup":        "                Black Desert Online                \n\n                [ - Reconnect - ]                \n\n",
 		},
 		"disconnect_alert": {
-			"message": "BDO Disconnect!",
-			"popup":   "                Black Desert Online                \n\n                [ - Disconnect - ]                \n\n",
+			"shortMessage": "Disconnect!",
+			"message":      "BDO Disconnect!",
+			"popup":        "                Black Desert Online                \n\n                [ - Disconnect - ]                \n\n",
 		},
 	}
 )
@@ -82,4 +85,13 @@ type ShutdownSetting struct {
 	Method  string
 	Delay   int
 	Message string
+}
+
+type AlertSetting struct {
+	Message         string
+	ValidToken      bool
+	EnableLine      bool
+	EnableSound     bool
+	IntervalAlert   int
+	ShutdownSetting ShutdownSetting
 }

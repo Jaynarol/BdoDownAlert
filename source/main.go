@@ -22,34 +22,12 @@ var (
 )
 
 func Main() {
-	logBind()
-	welcome()
+	bindLog()
+	welcomeText()
 	if loadSettings() && checkSound() {
 		loopPing()
 	}
-	exit()
-}
-
-func welcome() {
-	yellow := color.New(color.FgYellow).SprintFunc()
-
-	color.Set(color.FgYellow, color.Bold)
-	fmt.Println(val.TextWelcome)
-	color.Unset()
-	color.Cyan(val.TextEnjoy)
-	fmt.Fprintf(color.Output, val.TextCredit, yellow(val.Developer), yellow(val.BdoTHFamily))
-	color.Yellow(strings.Repeat("=", 85))
-	log.Printf("%s\r\n", val.TextStarting)
-}
-
-func logBind() {
-	mw := io.MultiWriter(os.Stdout, &lumberjack.Logger{
-		Filename:   "working.log",
-		MaxSize:    10,
-		MaxBackups: 3,
-		MaxAge:     30,
-	})
-	log.SetOutput(mw)
+	exitText()
 }
 
 func loopPing() {
@@ -62,6 +40,28 @@ func loopPing() {
 		lastStatus = alarm.ShouldAlert(lastStatus, client)
 		updateConsole()
 	}
+}
+
+func bindLog() {
+	mw := io.MultiWriter(os.Stdout, &lumberjack.Logger{
+		Filename:   "working.log",
+		MaxSize:    10,
+		MaxBackups: 3,
+		MaxAge:     30,
+	})
+	log.SetOutput(mw)
+}
+
+func welcomeText() {
+	yellow := color.New(color.FgYellow).SprintFunc()
+
+	color.Set(color.FgYellow, color.Bold)
+	fmt.Println(val.TextWelcome)
+	color.Unset()
+	color.Cyan(val.TextEnjoy)
+	fmt.Fprintf(color.Output, val.TextCredit, yellow(val.Developer), yellow(val.BdoTHFamily))
+	color.Yellow(strings.Repeat("=", 85))
+	log.Printf("%s\r\n", val.TextStarting)
 }
 
 func loadSettings() bool {
@@ -94,7 +94,7 @@ func updateConsole() {
 	}
 }
 
-func exit() {
+func exitText() {
 	fmt.Print(val.TextExit)
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }

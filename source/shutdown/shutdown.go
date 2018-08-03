@@ -49,7 +49,7 @@ func Should(timeNow time.Time, setting string) bool {
 func Run(method string) {
 	cmd := val.ShutdownCmd[method]
 	fmt.Printf("\r")
-	log.Printf("Computer %s...\r\n", val.ShutdownDoing[method])
+	log.Printf(val.TextShutingDown, val.ShutdownDoing[method])
 	err := exec.Command(cmd[0], cmd[1:]...).Start()
 	if err != nil {
 		log.Printf("%s ERROR: %s\r\n", strings.ToUpper(method), err)

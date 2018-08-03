@@ -2,28 +2,24 @@ package alarm
 
 import (
 	"fmt"
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/mp3"
-	"github.com/faiface/beep/speaker"
 	"github.com/fatih/color"
+	"github.com/jaynarol/BdoDownAlert/source/line"
 	"github.com/jaynarol/BdoDownAlert/source/shutdown"
+	"github.com/jaynarol/BdoDownAlert/source/sound"
 	"github.com/jaynarol/BdoDownAlert/source/val"
 	"jaynarol.com/utility/console"
 	"jaynarol.com/utility/messagebox"
 	"log"
-	"net/http"
-	"net/url"
-	"os"
 	"strings"
 	"time"
 )
 
-const MB_TOPMOST = 0x00040000
+const MbTopmost = 0x00040000
 
 var (
-	showMessageBox    = false
-	unsendLineMessage = true
-	situations        = map[bool]map[bool]string{
+	showMessageBox  = false
+	sendLineMessage = false
+	situations      = map[bool]map[bool]string{
 		true: {
 			true:  val.SituationStillRuning,
 			false: val.SituationDying,
@@ -61,76 +57,49 @@ func checkReconnect(lastStatus val.LastStatus, client val.Client) val.LastStatus
 
 func alert(section string) {
 
-	message := val.TextSituation[section]["message"]
-	console.SetTitle(fmt.Sprintf(val.TextTitle, message))
+	alertSetting := val.AlertSetting{
+		Message:         val.TextSituation[section]["message"],
+		EnableLine:      val.Setting.Section(section).Key("line_message").MustBool(false),
+		ValidToken:      len(val.Setting.Section("system").Key("line_token").MustString("")) > 30,
+		EnableSound:     val.Setting.Section(section).Key("sound").MustBool(false),
+		IntervalAlert:   val.Setting.Section("interval").Key("alert").RangeInt(10, 3, 86400),
+		ShutdownSetting: shutdown.Setting(section),
+	}
+
+	console.SetTitle(fmt.Sprintf(val.TextTitle, val.TextSituation[section]["shortMessage"]))
 	fmt.Printf("\r")
-	log.Printf("%s\r\n", message)
+	log.Printf("%s\r\n", alertSetting.Message)
 
-	enableLine := val.Setting.Section(section).Key("line_message").MustBool(false)
-	inputToken := len(val.Setting.Section("system").Key("line_token").MustString("")) > 30
-	enableSound := val.Setting.Section(section).Key("sound").MustBool(false)
-	intervalAlert := val.Setting.Section("interval").Key("alert").RangeInt(10, 3, 86400)
-	shutdownSetting := shutdown.Setting(section)
-	showMessageBox = true
-	unsendLineMessage = true
+	go loopAlert(alertSetting)
+	showMessagebox(section, alertSetting.ShutdownSetting)
+}
 
-	go func() {
-		for second := 0; showMessageBox == true; second++ {
-			if enableSound && second%intervalAlert == 0 {
-				playSound()
-			}
-			if enableLine && inputToken && unsendLineMessage && second%10 == 0 {
-				lineNotify(shutdownSetting.Active, message)
-			}
-			if shutdownSetting.Active {
-				color.Set(color.BgRed, color.Bold)
-				fmt.Printf(val.TextShutingDown, shutdownSetting.Method, shutdownSetting.Delay-second-1)
-				color.Unset()
-				if (second+1)%shutdownSetting.Delay == 0 {
-					shutdown.Run(shutdownSetting.Method)
-				}
-			}
-			time.Sleep(time.Second)
+func loopAlert(alert val.AlertSetting) {
+	shutdownSetting := alert.ShutdownSetting
+	sendLineMessage = false
+
+	for second := 0; showMessageBox == true; second++ {
+		if alert.EnableSound && second%alert.IntervalAlert == 0 {
+			sound.PlaySound()
 		}
-		fmt.Printf("\r                                                                          ")
-	}()
+		if alert.EnableLine && alert.ValidToken && !sendLineMessage && second%10 == 0 {
+			line.Notify(shutdownSetting.Active, alert.Message, &sendLineMessage)
+		}
+		if shutdownSetting.Active {
+			color.Set(color.BgRed, color.Bold)
+			fmt.Printf(val.TextShutdownCounting, shutdownSetting.Method, shutdownSetting.Delay-second-1)
+			color.Unset()
+			if (second+1)%shutdownSetting.Delay == 0 {
+				shutdown.Run(shutdownSetting.Method)
+			}
+		}
+		time.Sleep(time.Second)
+	}
+	fmt.Printf("\r%s", strings.Repeat(" ", 90))
+}
 
-	messagebox.Show(val.AppName, val.TextSituation[section]["popup"]+shutdownSetting.Message, messagebox.MB_ICONEXCLAMATION|MB_TOPMOST|messagebox.MB_OK)
+func showMessagebox(section string, shutdownSetting val.ShutdownSetting) {
+	showMessageBox = true
+	messagebox.Show(val.AppName, val.TextSituation[section]["popup"]+shutdownSetting.Message, messagebox.MB_ICONEXCLAMATION|MbTopmost|messagebox.MB_OK)
 	showMessageBox = false
-}
-
-func playSound() {
-	f, _ := os.Open(val.FileSound)
-	s, format, _ := mp3.Decode(f)
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-	playing := make(chan struct{})
-	speaker.Play(beep.Seq(s, beep.Callback(func() {
-		close(playing)
-	})))
-}
-
-func lineNotify(countdownShutdown bool, text string) {
-	if countdownShutdown {
-		fmt.Printf("\r")
-	}
-
-	client := &http.Client{}
-	params := url.Values{}
-	params.Set("message", text)
-	req, err := http.NewRequest("POST", "https://notify-api.line.me/api/notify", strings.NewReader(params.Encode()))
-	if err != nil {
-		log.Printf("LINE MESSAGE ERROR: %s\r\n", err)
-		return
-	}
-
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", val.Setting.Section("system").Key("line_token").MustString("")))
-	resp, err := client.Do(req)
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != 200 {
-		log.Printf("LINE MESSAGE ERROR: %s - %s\r\n", resp.Status, err)
-		return
-	}
-	log.Print("send Line Message successful\r\n")
-	unsendLineMessage = false
 }
