@@ -3,6 +3,7 @@ package alarm
 import (
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/go-vgo/robotgo"
 	"github.com/jaynarol/BdoDownAlert/source/line"
 	"github.com/jaynarol/BdoDownAlert/source/shutdown"
 	"github.com/jaynarol/BdoDownAlert/source/sound"
@@ -57,6 +58,11 @@ func checkReconnect(lastStatus val.LastStatus, client val.Client) val.LastStatus
 
 func alert(section string) {
 
+	shortMessage := val.TextSituation[section]["shortMessage"]
+	if haveActivity(shortMessage) {
+		return
+	}
+
 	alertSetting := val.AlertSetting{
 		Message:         val.TextSituation[section]["message"],
 		EnableLine:      val.Setting.Section(section).Key("line_message").MustBool(false),
@@ -66,9 +72,9 @@ func alert(section string) {
 		ShutdownSetting: shutdown.Setting(section),
 	}
 
-	console.SetTitle(fmt.Sprintf(val.TextTitle, val.TextSituation[section]["shortMessage"]))
 	fmt.Printf("\r")
 	log.Printf("%s\r\n", alertSetting.Message)
+	console.SetTitle(fmt.Sprintf(val.TextTitle, shortMessage))
 
 	go loopAlert(alertSetting)
 	showMessagebox(section, alertSetting.ShutdownSetting)
@@ -95,11 +101,34 @@ func loopAlert(alert val.AlertSetting) {
 		}
 		time.Sleep(time.Second)
 	}
-	fmt.Printf("\r%s", strings.Repeat(" ", 90))
+	clearLineConsole()
 }
 
 func showMessagebox(section string, shutdownSetting val.ShutdownSetting) {
 	showMessageBox = true
 	messagebox.Show(val.AppName, val.TextSituation[section]["popup"]+shutdownSetting.Message, messagebox.MB_ICONEXCLAMATION|MbTopmost|messagebox.MB_OK)
 	showMessageBox = false
+}
+
+func haveActivity(shortMessage string) bool {
+	maxIdle := val.Setting.Section("interval").Key("idle").RangeInt(15, 0, 3600)
+	x, y := robotgo.GetMousePos()
+	foundActivity := false
+	for second := maxIdle; second > 0; second-- {
+		x2, y2 := robotgo.GetMousePos()
+		if x != x2 || y != y2 {
+			foundActivity = true
+			break
+		}
+		color.Set(color.FgCyan)
+		fmt.Printf(val.TextIdleCounting, shortMessage, second)
+		color.Unset()
+		time.Sleep(time.Second)
+	}
+	clearLineConsole()
+	return foundActivity
+}
+
+func clearLineConsole() {
+	fmt.Printf("\r%s", strings.Repeat(" ", 90))
 }
