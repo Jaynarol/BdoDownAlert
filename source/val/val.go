@@ -6,7 +6,7 @@ import (
 
 const (
 	AppName     = "BdoDownAlert"
-	Version     = "v1.1.0"
+	Version     = "v1.2.1"
 	FileSetting = "setting.ini"
 	FileSound   = "assets/alarm.mp3"
 	Developer   = "Jaynarol"
