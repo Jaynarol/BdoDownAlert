@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const MbTopmost = 0x00040000
+const MbTopmost = 0x00001000
 
 var (
 	showMessageBox  = false
