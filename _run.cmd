@@ -1,1 +1,2 @@
-cd src && go run main.go
+run main.go
+pause
